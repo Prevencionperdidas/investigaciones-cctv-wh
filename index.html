@@ -36,6 +36,7 @@
   .sum-card.proc .n{color:var(--naranja);}
   .sum-card.ident .n{color:var(--verde);}
   .sum-card.noident .n{color:var(--rojo);}
+  .sum-card.desest .n{color:#6b7680;}
 
   .tabs{display:flex;gap:8px;padding:18px 24px 0;flex-wrap:wrap;}
   .tab{
@@ -59,6 +60,7 @@
   .card.enproceso .card-top{border-left-color:var(--amarillo);background:#FFFCF0;}
   .card.identificado .card-top{border-left-color:var(--verde);background:var(--verde-bg);}
   .card.noidentificado .card-top{border-left-color:var(--rojo);background:var(--rojo-bg);}
+  .card.desestimada .card-top{border-left-color:#6b7680;background:#F1F2F4;}
 
   .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
   .area{font-size:15px;font-weight:800;color:var(--azul-osc);}
@@ -68,6 +70,7 @@
   .estado-tag.enproceso{background:var(--amarillo);color:var(--azul-osc);}
   .estado-tag.identificado{background:var(--verde);color:#fff;}
   .estado-tag.noidentificado{background:var(--rojo);color:#fff;}
+  .estado-tag.desestimada{background:#6b7680;color:#fff;}
 
   .crit-tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;}
   .crit-Alta{background:var(--rojo-bg);color:var(--rojo);}
@@ -87,6 +90,7 @@
   .card.enproceso .timer-box{background:#FFF7DB;}
   .card.identificado .timer-box{background:var(--verde-bg);}
   .card.noidentificado .timer-box{background:var(--rojo-bg);}
+  .card.desestimada .timer-box{background:#F1F2F4;}
 
   .actions{padding:12px 16px 16px;display:flex;gap:8px;border-top:1px solid #F0F2F4;}
   .actions button{
@@ -95,7 +99,36 @@
   .btn-aceptar{background:var(--azul);color:#fff;}
   .btn-ident{background:var(--verde);color:#fff;}
   .btn-noident{background:var(--rojo);color:#fff;}
+  .btn-desest{background:#6b7680;color:#fff;}
   .actions button:active{transform:scale(.97);}
+
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(4,10,18,.75);z-index:100;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:#fff;border-radius:16px;max-width:400px;width:100%;padding:22px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+  }
+  .modal-box h3{margin:0 0 4px;font-size:16px;color:var(--azul-osc);}
+  .modal-box p{margin:0 0 16px;font-size:12.5px;color:#6b7680;}
+  .modal-box label{display:block;font-size:12.5px;font-weight:700;color:var(--azul-osc);margin:14px 0 6px;}
+  .modal-box label:first-of-type{margin-top:0;}
+  .modal-box input[type=text], .modal-box input[type=number]{
+    width:100%;padding:11px;border-radius:9px;border:1.5px solid var(--gris-borde);font-size:14.5px;font-family:inherit;
+  }
+  .modal-toggle{display:flex;gap:8px;}
+  .modal-toggle button{
+    flex:1;padding:10px;border-radius:9px;border:1.5px solid var(--gris-borde);background:#fbfcfd;
+    font-weight:700;font-size:13px;color:#5b6670;cursor:pointer;
+  }
+  .modal-toggle button.sel{background:var(--azul);color:#fff;border-color:var(--azul);}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .modal-actions button{flex:1;padding:12px;border-radius:9px;border:none;font-weight:800;font-size:13.5px;cursor:pointer;}
+  .modal-cancel{background:#EDEFF1;color:#5b6670;}
+  .modal-confirm{background:var(--azul);color:#fff;}
+  #campoMonto{display:none;}
 
   .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:#8b94a0;font-size:14px;}
 
@@ -120,6 +153,7 @@
   <div class="sum-card proc"><div class="n" id="cProc">0</div><div class="l">En proceso</div></div>
   <div class="sum-card ident"><div class="n" id="cIdent">0</div><div class="l">Identificadas</div></div>
   <div class="sum-card noident"><div class="n" id="cNoIdent">0</div><div class="l">No identificadas</div></div>
+  <div class="sum-card desest"><div class="n" id="cDesest">0</div><div class="l">Desestimadas</div></div>
 </div>
 
 <div class="tabs">
@@ -142,13 +176,45 @@
 <div class="grid" id="grid"><div class="empty">Cargando investigaciones…</div></div>
 <div class="updated" id="updated"></div>
 
+<div class="modal-overlay" id="modalAceptar">
+  <div class="modal-box">
+    <h3>✅ Aceptar investigación</h3>
+    <p>Ingresa el nombre del CCTV en turno que tomará el caso.</p>
+    <label>Nombre CCTV en turno</label>
+    <input type="text" id="inputNombreCCTV" placeholder="Nombre y apellido">
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="cerrarModalAceptar()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmarAceptar()">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalResolver">
+  <div class="modal-box">
+    <h3 id="tituloResolver">Finalizar investigación</h3>
+    <p>Confirma el resultado. Si corresponde, indica si hubo recuperación monetaria.</p>
+    <label>¿Hubo recuperación monetaria?</label>
+    <div class="modal-toggle">
+      <button type="button" id="btnMontoNo" class="sel" onclick="toggleMonto(false)">No</button>
+      <button type="button" id="btnMontoSi" onclick="toggleMonto(true)">Sí</button>
+    </div>
+    <div id="campoMonto">
+      <label>Monto total recuperado (CLP)</label>
+      <input type="number" id="inputMonto" placeholder="Ej: 150000" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="cerrarModalResolver()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmarResolver()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ====== CONFIGURACIÓN ====== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec';
-const CCTV_RESPONSABLE = ''; // opcional: nombre de quien opera este panel
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
 // Pega aquí el link para compartir de tu Google Sheet (el mismo que usa el Apps Script)
 // Ej: 'https://docs.google.com/spreadsheets/d/TU_ID_DE_HOJA/edit'
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765';
+const SHEET_URL = 'PEGA_AQUI_EL_LINK_DE_TU_GOOGLE_SHEET';
 
 let datos = [];
 let filtro = 'activas';
@@ -179,6 +245,7 @@ function estadoInfo(r){
   if(r.Estado === 'En Proceso') return {cls:'enproceso', tag:'En proceso'};
   if(r.Estado === 'Resuelto' && r.Resultado === 'Identificado') return {cls:'identificado', tag:'Identificado ✓'};
   if(r.Estado === 'Resuelto' && r.Resultado === 'No Identificado') return {cls:'noidentificado', tag:'No identificado ✕'};
+  if(r.Estado === 'Resuelto' && r.Resultado === 'Desestimada por Capacidad') return {cls:'desestimada', tag:'Desestimada · Capacidad'};
   return {cls:'pendiente', tag:r.Estado};
 }
 
@@ -210,6 +277,7 @@ function render(){
   document.getElementById('cProc').textContent = datos.filter(r=>r.Estado==='En Proceso').length;
   document.getElementById('cIdent').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='Identificado').length;
   document.getElementById('cNoIdent').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='No Identificado').length;
+  document.getElementById('cDesest').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='Desestimada por Capacidad').length;
 
   const grid = document.getElementById('grid');
   if(!filtrados.length){
@@ -248,13 +316,17 @@ function render(){
 
     let actionsHtml = '';
     if(r.Estado==='Pendiente'){
-      actionsHtml = `<div class="actions"><button class="btn-aceptar" onclick="aceptar('${r.ID}')">✅ Aceptar investigación</button></div>`;
+      actionsHtml = `<div class="actions"><button class="btn-aceptar" onclick="abrirModalAceptar('${r.ID}')">✅ Aceptar investigación</button></div>`;
     } else if(r.Estado==='En Proceso'){
       actionsHtml = `<div class="actions">
-        <button class="btn-ident" onclick="resolver('${r.ID}','Identificado')">✔ Identificado</button>
-        <button class="btn-noident" onclick="resolver('${r.ID}','No Identificado')">✕ No identificado</button>
+        <button class="btn-ident" onclick="abrirModalResolver('${r.ID}','Identificado')">✔ Identificado</button>
+        <button class="btn-noident" onclick="abrirModalResolver('${r.ID}','No Identificado')">✕ No identificado</button>
+        <button class="btn-desest" onclick="abrirModalResolver('${r.ID}','Desestimada por Capacidad')">⊘ Desestimada</button>
       </div>`;
     }
+
+    const montoHtml = (r.Estado==='Resuelto' && r.MontoRecuperado) ?
+      `<div class="meta"><span>💰 Recuperado: <b>$${Number(r.MontoRecuperado).toLocaleString('es-CL')}</b></span></div>` : '';
 
     return `
     <div class="card ${e.cls}">
@@ -272,8 +344,9 @@ function render(){
       <div class="meta">
         <span>🕒 Solicitado: <b>${horaSol}</b></span>
         <span>⏱ SLA objetivo: <b>${r.TiempoRespuesta}</b></span>
-        ${r.ResponsableCCTV ? `<span>🎥 CCTV: <b>${r.ResponsableCCTV}</b></span>` : ''}
+        ${r.ResponsableCCTV ? `<span>🎥 CCTV en turno: <b>${r.ResponsableCCTV}</b></span>` : ''}
       </div>
+      ${montoHtml}
       ${timerHtml}
       ${actionsHtml}
     </div>`;
@@ -281,7 +354,7 @@ function render(){
 }
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('PEGA_AQUI') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
@@ -309,11 +382,12 @@ function descargarExcel(){
     'Hora aceptación CCTV': r.HoraAceptacion ? new Date(r.HoraAceptacion).toLocaleString('es-CL') : '',
     'Responsable CCTV': r.ResponsableCCTV,
     'Hora finalización': r.HoraFinalizacion ? new Date(r.HoraFinalizacion).toLocaleString('es-CL') : '',
-    'Resultado': r.Resultado
+    'Resultado': r.Resultado,
+    'Monto recuperado (CLP)': r.MontoRecuperado || ''
   }));
   const ws = XLSX.utils.json_to_sheet(filas);
   ws['!cols'] = [
-    {wch:16},{wch:18},{wch:18},{wch:20},{wch:11},{wch:16},{wch:40},{wch:12},{wch:18},{wch:16},{wch:18},{wch:16}
+    {wch:16},{wch:18},{wch:18},{wch:20},{wch:11},{wch:16},{wch:40},{wch:12},{wch:18},{wch:16},{wch:18},{wch:20},{wch:18}
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Investigaciones CCTV');
@@ -321,19 +395,69 @@ function descargarExcel(){
   XLSX.writeFile(wb, `Investigaciones_CCTV_${fecha}.xlsx`);
 }
 
-function aceptar(id){
+let pendingAcceptId = null;
+let pendingResolveId = null;
+let pendingResultado = null;
+let montoAplica = false;
+
+function abrirModalAceptar(id){
+  pendingAcceptId = id;
+  document.getElementById('inputNombreCCTV').value = localStorage.getItem('cctv_ultimo_operador') || '';
+  document.getElementById('modalAceptar').classList.add('show');
+}
+function cerrarModalAceptar(){
+  document.getElementById('modalAceptar').classList.remove('show');
+  pendingAcceptId = null;
+}
+function confirmarAceptar(){
+  const nombre = document.getElementById('inputNombreCCTV').value.trim();
+  if(!nombre){ alert('Ingresa el nombre del CCTV en turno.'); return; }
+  localStorage.setItem('cctv_ultimo_operador', nombre);
   const fd = new FormData();
   fd.append('action','accept');
-  fd.append('id', id);
-  fd.append('responsable', CCTV_RESPONSABLE);
+  fd.append('id', pendingAcceptId);
+  fd.append('responsable', nombre);
   fetch(API_URL, {method:'POST', body:fd, mode:'no-cors'}).then(()=> setTimeout(cargarDatos, 500));
+  cerrarModalAceptar();
 }
-function resolver(id, resultado){
+
+const TITULOS_RESOLVER = {
+  'Identificado': '✔ Marcar como Identificado',
+  'No Identificado': '✕ Marcar como No identificado',
+  'Desestimada por Capacidad': '⊘ Desestimar por capacidad'
+};
+
+function abrirModalResolver(id, resultado){
+  pendingResolveId = id;
+  pendingResultado = resultado;
+  document.getElementById('tituloResolver').textContent = TITULOS_RESOLVER[resultado] || 'Finalizar investigación';
+  document.getElementById('inputMonto').value = '';
+  toggleMonto(false);
+  document.getElementById('modalResolver').classList.add('show');
+}
+function cerrarModalResolver(){
+  document.getElementById('modalResolver').classList.remove('show');
+  pendingResolveId = null; pendingResultado = null;
+}
+function toggleMonto(aplica){
+  montoAplica = aplica;
+  document.getElementById('btnMontoSi').classList.toggle('sel', aplica);
+  document.getElementById('btnMontoNo').classList.toggle('sel', !aplica);
+  document.getElementById('campoMonto').style.display = aplica ? 'block' : 'none';
+}
+function confirmarResolver(){
+  let monto = '';
+  if(montoAplica){
+    monto = document.getElementById('inputMonto').value.trim();
+    if(!monto || Number(monto) < 0){ alert('Ingresa un monto válido.'); return; }
+  }
   const fd = new FormData();
   fd.append('action','resolve');
-  fd.append('id', id);
-  fd.append('resultado', resultado);
+  fd.append('id', pendingResolveId);
+  fd.append('resultado', pendingResultado);
+  fd.append('monto', monto);
   fetch(API_URL, {method:'POST', body:fd, mode:'no-cors'}).then(()=> setTimeout(cargarDatos, 500));
+  cerrarModalResolver();
 }
 
 // Reloj y cronómetros en vivo
