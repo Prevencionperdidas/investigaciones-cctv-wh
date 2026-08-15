@@ -259,7 +259,7 @@ document.getElementById('chipsTiempo').addEventListener('click', e=>{
 
 function init(){
   // Autocompletar (no obligatorio) con el último nombre usado, solo por comodidad
-  const ultimoNombre = localStorage.getItem('cctv_last_nombre') || '';
+  const ultimoNombre = (localStorage.getItem('cctv_last_nombre') || '').toUpperCase();
   document.getElementById('nombreSolicitante').value = ultimoNombre;
   document.getElementById('nombreBusqueda').value = ultimoNombre;
 
@@ -384,6 +384,16 @@ function renderMisSolicitudes(rows){
 }
 
 init();
+
+// Forzar mayúsculas automáticas en todos los campos de texto libre
+function forzarMayusculas(el){
+  const pos = el.selectionStart;
+  el.value = el.value.toUpperCase();
+  if(el.setSelectionRange) el.setSelectionRange(pos, pos);
+}
+document.querySelectorAll('input[type="text"], textarea').forEach(el=>{
+  el.addEventListener('input', ()=> forzarMayusculas(el));
+});
 </script>
 </body>
 </html>
