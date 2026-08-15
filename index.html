@@ -167,7 +167,7 @@
 <div class="toolbar">
   <input type="text" id="buscador" placeholder="🔎 Buscar por área, solicitante o SKU/OLPN…" oninput="render()">
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button onclick="cargarDatos()">⟳ Actualizar ahora</button>
+    <button id="btnActualizar" onclick="cargarDatos()">⟳ Actualizar ahora</button>
     <button onclick="descargarExcel()">⬇ Descargar Excel</button>
     <button onclick="abrirGoogleSheet()">📄 Abrir Google Sheet</button>
   </div>
@@ -209,6 +209,20 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalPin">
+  <div class="modal-box">
+    <h3>🔒 Acceso a Google Sheet</h3>
+    <p>Ingresa la contraseña para abrir la hoja de cálculo.</p>
+    <label>Contraseña</label>
+    <input type="password" id="inputPin" maxlength="10" placeholder="••••••" inputmode="numeric" onkeydown="if(event.key==='Enter') confirmarPin();">
+    <p id="pinError" style="display:none;color:var(--rojo);font-weight:700;margin:8px 0 0;">Contraseña incorrecta.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="cerrarModalPin()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmarPin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ====== CONFIGURACIÓN ====== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec';
@@ -226,18 +240,47 @@ function setFiltro(f){
 }
 
 function cargarDatos(){
+  const btn = document.getElementById('btnActualizar');
+  const estado = document.getElementById('updated');
+  if(btn){ btn.disabled = true; btn.textContent = '⟳ Actualizando…'; }
+  estado.textContent = 'Actualizando…';
+
   const cb = 'cb_' + Date.now();
+  let respondido = false;
+
   window[cb] = function(res){
-    datos = res.data || [];
-    render();
-    document.getElementById('updated').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL');
+    respondido = true;
+    if(res && res.ok === false){
+      estado.textContent = 'Error del servidor: ' + (res.error || 'desconocido');
+      document.getElementById('grid').innerHTML = '<div class="empty">El servidor respondió con un error. Revisa el Apps Script.</div>';
+    } else {
+      datos = res.data || [];
+      render();
+      estado.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL');
+    }
+    if(btn){ btn.disabled = false; btn.textContent = '⟳ Actualizar ahora'; }
     delete window[cb];
   };
+
   const script = document.createElement('script');
   script.src = API_URL + '?action=list&callback=' + cb;
-  script.onerror = ()=>{ document.getElementById('grid').innerHTML = '<div class="empty">No se pudo conectar. Revisa la URL de Apps Script o tu conexión.</div>'; };
+  script.onerror = ()=>{
+    respondido = true;
+    estado.textContent = 'No se pudo conectar.';
+    document.getElementById('grid').innerHTML = '<div class="empty">No se pudo conectar. Revisa que la URL de Apps Script (API_URL) esté bien configurada en el código y que tengas internet.</div>';
+    if(btn){ btn.disabled = false; btn.textContent = '⟳ Actualizar ahora'; }
+  };
   document.body.appendChild(script);
-  setTimeout(()=>script.remove(), 8000);
+
+  // Si en 10s no hubo respuesta (ni éxito ni error de red), avisar igual
+  setTimeout(()=>{
+    if(!respondido){
+      estado.textContent = 'Sin respuesta del servidor.';
+      document.getElementById('grid').innerHTML = '<div class="empty">Sin respuesta del servidor tras 10 segundos.<br>Revisa que API_URL apunte a tu implementación de Apps Script (Implementar → Administrar implementaciones → Nueva versión) y que el acceso esté configurado como "Cualquier usuario".</div>';
+      if(btn){ btn.disabled = false; btn.textContent = '⟳ Actualizar ahora'; }
+    }
+    script.remove();
+  }, 10000);
 }
 
 function estadoInfo(r){
@@ -354,11 +397,28 @@ function render(){
 }
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
-  window.open(SHEET_URL, '_blank');
+  document.getElementById('inputPin').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  document.getElementById('modalPin').classList.add('show');
+  setTimeout(()=>document.getElementById('inputPin').focus(), 100);
+}
+function cerrarModalPin(){
+  document.getElementById('modalPin').classList.remove('show');
+}
+function confirmarPin(){
+  const pin = document.getElementById('inputPin').value.trim();
+  if(pin === '358097'){
+    cerrarModalPin();
+    window.open(SHEET_URL, '_blank');
+  } else {
+    document.getElementById('pinError').style.display = 'block';
+    document.getElementById('inputPin').value = '';
+    document.getElementById('inputPin').focus();
+  }
 }
 
 function descargarExcel(){
