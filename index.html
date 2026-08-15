@@ -397,7 +397,7 @@ function render(){
 }
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
@@ -462,8 +462,9 @@ let montoAplica = false;
 
 function abrirModalAceptar(id){
   pendingAcceptId = id;
-  document.getElementById('inputNombreCCTV').value = localStorage.getItem('cctv_ultimo_operador') || '';
+  document.getElementById('inputNombreCCTV').value = '';
   document.getElementById('modalAceptar').classList.add('show');
+  setTimeout(()=>document.getElementById('inputNombreCCTV').focus(), 100);
 }
 function cerrarModalAceptar(){
   document.getElementById('modalAceptar').classList.remove('show');
@@ -472,7 +473,6 @@ function cerrarModalAceptar(){
 function confirmarAceptar(){
   const nombre = document.getElementById('inputNombreCCTV').value.trim();
   if(!nombre){ alert('Ingresa el nombre del CCTV en turno.'); return; }
-  localStorage.setItem('cctv_ultimo_operador', nombre);
   const fd = new FormData();
   fd.append('action','accept');
   fd.append('id', pendingAcceptId);
@@ -532,6 +532,16 @@ setInterval(()=>{
 // Autorefresco de datos cada 20s
 cargarDatos();
 setInterval(cargarDatos, 20000);
+
+// Forzar mayúsculas automáticas en todos los campos de texto libre (excluye número y contraseña)
+function forzarMayusculas(el){
+  const pos = el.selectionStart;
+  el.value = el.value.toUpperCase();
+  if(el.setSelectionRange) el.setSelectionRange(pos, pos);
+}
+document.querySelectorAll('input[type="text"], textarea').forEach(el=>{
+  el.addEventListener('input', ()=> forzarMayusculas(el));
+});
 </script>
 </body>
 </html>
