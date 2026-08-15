@@ -483,7 +483,7 @@ function render(){
 let pinAction = null; // 'sheet' | 'dashboard'
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('https://prevencionperdidas.github.io/investigaciones-cctv-wh/') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
@@ -695,11 +695,12 @@ function descargarExcel(){
     'Responsable CCTV': r.ResponsableCCTV,
     'Hora finalización': r.HoraFinalizacion ? new Date(r.HoraFinalizacion).toLocaleString('es-CL') : '',
     'Resultado': r.Resultado,
-    'Monto recuperado (CLP)': r.MontoRecuperado || ''
+    'Monto recuperado (CLP)': r.MontoRecuperado || '',
+    'Duración del caso': r.DuracionCaso || ''
   }));
   const ws = XLSX.utils.json_to_sheet(filas);
   ws['!cols'] = [
-    {wch:16},{wch:18},{wch:18},{wch:20},{wch:11},{wch:16},{wch:40},{wch:12},{wch:18},{wch:16},{wch:18},{wch:20},{wch:18}
+    {wch:16},{wch:18},{wch:18},{wch:20},{wch:11},{wch:16},{wch:40},{wch:12},{wch:18},{wch:16},{wch:18},{wch:20},{wch:18},{wch:16}
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Investigaciones CCTV');
