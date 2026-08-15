@@ -211,10 +211,10 @@
 
 <script>
 /* ====== CONFIGURACIÓN ====== */
-const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
+const API_URL = 'https://script.google.com/macros/s/AKfycbynLOdutFeD1JOXuHVe7O-2cUlKDd9aFKGl9SY3GzuEhO53HBdfFwXtniikOtnRi5g/exec';
 // Pega aquí el link para compartir de tu Google Sheet (el mismo que usa el Apps Script)
 // Ej: 'https://docs.google.com/spreadsheets/d/TU_ID_DE_HOJA/edit'
-const SHEET_URL = 'PEGA_AQUI_EL_LINK_DE_TU_GOOGLE_SHEET';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765';
 
 let datos = [];
 let filtro = 'activas';
@@ -354,7 +354,7 @@ function render(){
 }
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('PEGA_AQUI') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
