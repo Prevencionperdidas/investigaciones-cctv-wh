@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel CCTV · Investigaciones · PPS IKEA</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root{
     --azul:#0058A3; --azul-osc:#003D73; --amarillo:#FFDA1A;
@@ -24,6 +25,12 @@
   header h1{font-size:18px;margin:0;}
   header p{margin:0;font-size:12px;opacity:.85;}
   .clock{font-size:13px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:8px;}
+  .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .btn-dash-header{
+    background:var(--amarillo);color:var(--azul-osc);border:none;border-radius:8px;
+    padding:8px 13px;font-weight:800;font-size:12.5px;cursor:pointer;white-space:nowrap;
+  }
+  .btn-dash-header:active{transform:scale(.97);}
 
   .summary{display:flex;gap:14px;padding:16px 24px 0;flex-wrap:wrap;}
   .sum-card{
@@ -130,6 +137,37 @@
   .modal-confirm{background:var(--azul);color:#fff;}
   #campoMonto{display:none;}
 
+  .dash-overlay{
+    display:none;position:fixed;inset:0;background:#EEF1F4;z-index:150;overflow-y:auto;
+  }
+  .dash-overlay.show{display:block;}
+  .dash-container{max-width:1100px;margin:0 auto;padding:20px 20px 60px;}
+  .dash-header{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    background:var(--azul);color:#fff;padding:18px 20px;border-radius:14px;margin-bottom:18px;
+  }
+  .dash-header h2{margin:0 0 4px;font-size:17px;}
+  .dash-header p{margin:0;font-size:12px;opacity:.85;}
+  .dash-close{background:var(--amarillo);color:var(--azul-osc);border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:13px;flex-shrink:0;}
+
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px;}
+  .dash-card{background:#fff;border-radius:14px;border:1px solid var(--gris-borde);padding:18px;}
+  .dash-card h3{margin:0 0 14px;font-size:14.5px;color:var(--azul-osc);}
+
+  .dash-numbers{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .dash-numbers .dn{flex:1;min-width:90px;background:#F7F8FA;border-radius:10px;padding:10px;text-align:center;}
+  .dash-numbers .dn .v{font-size:20px;font-weight:800;color:var(--azul-osc);}
+  .dash-numbers .dn .l{font-size:10.5px;color:#6b7680;font-weight:700;text-transform:uppercase;}
+
+  .dash-chart-box{position:relative;height:220px;margin-bottom:14px;}
+  .dash-chart-box.tall{height:280px;}
+  .dash-note{font-size:11px;color:#8b94a0;margin:4px 0 0;line-height:1.4;}
+
+  .dash-monto{
+    font-size:34px;font-weight:800;color:var(--verde);text-align:center;
+    background:var(--verde-bg);border-radius:12px;padding:16px;margin-bottom:16px;
+  }
+
   .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:#8b94a0;font-size:14px;}
 
   .updated{padding:0 24px 20px;font-size:11.5px;color:#8b94a0;text-align:right;}
@@ -145,7 +183,10 @@
       <p>PPS · IKEA CD Chile · Home Delivery y operación</p>
     </div>
   </div>
-  <div class="clock" id="reloj">--:--:--</div>
+  <div class="header-right">
+    <button class="btn-dash-header" onclick="abrirDashboardPin()">📊 Dashboard privado</button>
+    <div class="clock" id="reloj">--:--:--</div>
+  </div>
 </header>
 
 <div class="summary">
@@ -211,14 +252,56 @@
 
 <div class="modal-overlay" id="modalPin">
   <div class="modal-box">
-    <h3>🔒 Acceso a Google Sheet</h3>
-    <p>Ingresa la contraseña para abrir la hoja de cálculo.</p>
+    <h3 id="tituloPin">🔒 Acceso protegido</h3>
+    <p>Ingresa la contraseña para continuar.</p>
     <label>Contraseña</label>
     <input type="password" id="inputPin" maxlength="10" placeholder="••••••" inputmode="numeric" onkeydown="if(event.key==='Enter') confirmarPin();">
     <p id="pinError" style="display:none;color:var(--rojo);font-weight:700;margin:8px 0 0;">Contraseña incorrecta.</p>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="cerrarModalPin()">Cancelar</button>
       <button class="modal-confirm" onclick="confirmarPin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-overlay" id="dashboardOverlay">
+  <div class="dash-container">
+    <div class="dash-header">
+      <div>
+        <h2>📊 Dashboard privado · Investigaciones CCTV</h2>
+        <p>Solo visible con contraseña · Datos actuales de la hoja</p>
+      </div>
+      <button class="dash-close" onclick="cerrarDashboard()">✕ Cerrar</button>
+    </div>
+
+    <div class="dash-grid">
+
+      <div class="dash-card">
+        <h3>1 · Estados y cumplimiento de SLA</h3>
+        <div class="dash-numbers" id="dashEstadosNums"></div>
+        <div class="dash-chart-box"><canvas id="chartEstados"></canvas></div>
+        <div class="dash-chart-box"><canvas id="chartSLA"></canvas></div>
+        <p class="dash-note">El cumplimiento se calcula comparando el tiempo entre la solicitud y la finalización contra el SLA comprometido (24h / 48h / 72h). Solo considera casos resueltos.</p>
+      </div>
+
+      <div class="dash-card">
+        <h3>2 · Solicitudes por área y resultado</h3>
+        <div class="dash-chart-box tall"><canvas id="chartArea"></canvas></div>
+        <div class="dash-chart-box"><canvas id="chartResultado"></canvas></div>
+      </div>
+
+      <div class="dash-card">
+        <h3>3 · Desempeño por operador CCTV</h3>
+        <div class="dash-chart-box tall"><canvas id="chartCCTVCasos"></canvas></div>
+        <div class="dash-chart-box tall"><canvas id="chartCCTVTiempo"></canvas></div>
+      </div>
+
+      <div class="dash-card">
+        <h3>4 · Recuperación monetaria (casos identificados)</h3>
+        <div class="dash-monto" id="dashMontoTotal">$0</div>
+        <div class="dash-chart-box"><canvas id="chartMonto"></canvas></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -257,6 +340,7 @@ function cargarDatos(){
       datos = res.data || [];
       render();
       estado.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL');
+      if(document.getElementById('dashboardOverlay').classList.contains('show')) construirDashboard();
     }
     if(btn){ btn.disabled = false; btn.textContent = '⟳ Actualizar ahora'; }
     delete window[cb];
@@ -396,11 +480,23 @@ function render(){
   }).join('');
 }
 
+let pinAction = null; // 'sheet' | 'dashboard'
+
 function abrirGoogleSheet(){
   if(!SHEET_URL || SHEET_URL.indexOf('https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
+  pinAction = 'sheet';
+  document.getElementById('tituloPin').textContent = '🔒 Acceso a Google Sheet';
+  document.getElementById('inputPin').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  document.getElementById('modalPin').classList.add('show');
+  setTimeout(()=>document.getElementById('inputPin').focus(), 100);
+}
+function abrirDashboardPin(){
+  pinAction = 'dashboard';
+  document.getElementById('tituloPin').textContent = '🔒 Acceso al Dashboard privado';
   document.getElementById('inputPin').value = '';
   document.getElementById('pinError').style.display = 'none';
   document.getElementById('modalPin').classList.add('show');
@@ -413,12 +509,168 @@ function confirmarPin(){
   const pin = document.getElementById('inputPin').value.trim();
   if(pin === '358097'){
     cerrarModalPin();
-    window.open(SHEET_URL, '_blank');
+    if(pinAction === 'sheet') window.open(SHEET_URL, '_blank');
+    else if(pinAction === 'dashboard') abrirDashboard();
   } else {
     document.getElementById('pinError').style.display = 'block';
     document.getElementById('inputPin').value = '';
     document.getElementById('inputPin').focus();
   }
+}
+
+/* ====== DASHBOARD PRIVADO ====== */
+const chartInstances = {};
+const COLOR_AZUL = '#0058A3', COLOR_AMARILLO = '#FFDA1A', COLOR_VERDE = '#2E8B3D',
+      COLOR_ROJO = '#C0392B', COLOR_NARANJA = '#E08A00', COLOR_GRIS = '#6b7680';
+
+function abrirDashboard(){
+  document.getElementById('dashboardOverlay').classList.add('show');
+  construirDashboard();
+}
+function cerrarDashboard(){
+  document.getElementById('dashboardOverlay').classList.remove('show');
+}
+
+function pintarChart(id, config){
+  if(chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  chartInstances[id] = new Chart(ctx, config);
+}
+
+function slaHoras(tiempoRespuesta){
+  if(tiempoRespuesta === '24 horas') return 24;
+  if(tiempoRespuesta === '48 horas') return 48;
+  if(tiempoRespuesta === '72 horas o más') return 72;
+  return null;
+}
+
+function contarPor(arr, key){
+  const m = {};
+  arr.forEach(r=>{ const k = r[key] || 'Sin dato'; m[k] = (m[k]||0)+1; });
+  return m;
+}
+
+function construirDashboard(){
+  const resueltos = datos.filter(r=>r.Estado==='Resuelto');
+
+  /* ---- 1. Estados + SLA ---- */
+  const nPend = datos.filter(r=>r.Estado==='Pendiente').length;
+  const nProc = datos.filter(r=>r.Estado==='En Proceso').length;
+  const nRes = resueltos.length;
+
+  let cumplidos = 0, incumplidos = 0;
+  const slaPorTipo = {'24 horas':{c:0,i:0}, '48 horas':{c:0,i:0}, '72 horas o más':{c:0,i:0}};
+  resueltos.forEach(r=>{
+    const horasSla = slaHoras(r.TiempoRespuesta);
+    if(horasSla == null || !r.Timestamp || !r.HoraFinalizacion) return;
+    const horasReales = (new Date(r.HoraFinalizacion) - new Date(r.Timestamp)) / 3600000;
+    const ok = horasReales <= horasSla;
+    if(ok) cumplidos++; else incumplidos++;
+    if(slaPorTipo[r.TiempoRespuesta]){
+      ok ? slaPorTipo[r.TiempoRespuesta].c++ : slaPorTipo[r.TiempoRespuesta].i++;
+    }
+  });
+  const pctCumplido = (cumplidos+incumplidos) ? Math.round(cumplidos/(cumplidos+incumplidos)*100) : 0;
+
+  document.getElementById('dashEstadosNums').innerHTML = `
+    <div class="dn"><div class="v">${nPend}</div><div class="l">Pendientes</div></div>
+    <div class="dn"><div class="v">${nProc}</div><div class="l">En proceso</div></div>
+    <div class="dn"><div class="v">${nRes}</div><div class="l">Resueltas</div></div>
+    <div class="dn"><div class="v">${pctCumplido}%</div><div class="l">SLA cumplido</div></div>
+  `;
+
+  pintarChart('chartEstados', {
+    type:'doughnut',
+    data:{ labels:['Pendientes','En proceso','Resueltas'],
+      datasets:[{ data:[nPend,nProc,nRes], backgroundColor:[COLOR_GRIS,COLOR_AMARILLO,COLOR_AZUL] }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{boxWidth:12,font:{size:11}} }, title:{display:true,text:'Distribución actual de casos'} } }
+  });
+
+  pintarChart('chartSLA', {
+    type:'bar',
+    data:{
+      labels:['24 horas','48 horas','72 horas o más'],
+      datasets:[
+        { label:'Dentro de SLA', data:[slaPorTipo['24 horas'].c, slaPorTipo['48 horas'].c, slaPorTipo['72 horas o más'].c], backgroundColor:COLOR_VERDE },
+        { label:'Fuera de SLA', data:[slaPorTipo['24 horas'].i, slaPorTipo['48 horas'].i, slaPorTipo['72 horas o más'].i], backgroundColor:COLOR_ROJO }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{precision:0}} },
+      plugins:{ legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}, title:{display:true,text:'Cumplimiento de SLA por tipo comprometido'} } }
+  });
+
+  /* ---- 2. Por área + resultado ---- */
+  const porArea = contarPor(datos, 'Area');
+  const areasOrdenadas = Object.entries(porArea).sort((a,b)=>b[1]-a[1]);
+
+  pintarChart('chartArea', {
+    type:'bar',
+    data:{ labels:areasOrdenadas.map(a=>a[0]), datasets:[{ label:'Solicitudes enviadas', data:areasOrdenadas.map(a=>a[1]), backgroundColor:COLOR_AZUL }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{ x:{beginAtZero:true, ticks:{precision:0}} },
+      plugins:{ legend:{display:false}, title:{display:true,text:'Casos enviados por área de trabajo'} } }
+  });
+
+  const porResultado = contarPor(resueltos, 'Resultado');
+  pintarChart('chartResultado', {
+    type:'doughnut',
+    data:{
+      labels:['Identificado','No identificado','Desestimada por Capacidad'],
+      datasets:[{ data:[porResultado['Identificado']||0, porResultado['No Identificado']||0, porResultado['Desestimada por Capacidad']||0],
+        backgroundColor:[COLOR_VERDE, COLOR_ROJO, COLOR_GRIS] }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}, title:{display:true,text:'Casos cerrados según resultado'} } }
+  });
+
+  /* ---- 3. Por operador CCTV ---- */
+  const casosPorCCTV = contarPor(resueltos, 'ResponsableCCTV');
+  const cctvOrdenados = Object.entries(casosPorCCTV).sort((a,b)=>b[1]-a[1]);
+
+  pintarChart('chartCCTVCasos', {
+    type:'bar',
+    data:{ labels:cctvOrdenados.map(a=>a[0]), datasets:[{ label:'Casos resueltos', data:cctvOrdenados.map(a=>a[1]), backgroundColor:COLOR_AZUL }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{ x:{beginAtZero:true, ticks:{precision:0}} },
+      plugins:{ legend:{display:false}, title:{display:true,text:'Cantidad de casos resueltos por CCTV'} } }
+  });
+
+  const sumaTiempo = {}, cuentaTiempo = {};
+  resueltos.forEach(r=>{
+    if(!r.HoraAceptacion || !r.HoraFinalizacion) return;
+    const k = r.ResponsableCCTV || 'Sin dato';
+    const horas = (new Date(r.HoraFinalizacion) - new Date(r.HoraAceptacion)) / 3600000;
+    sumaTiempo[k] = (sumaTiempo[k]||0) + horas;
+    cuentaTiempo[k] = (cuentaTiempo[k]||0) + 1;
+  });
+  const promedios = Object.keys(sumaTiempo).map(k=>({k, prom: sumaTiempo[k]/cuentaTiempo[k]})).sort((a,b)=>a.prom-b.prom);
+
+  pintarChart('chartCCTVTiempo', {
+    type:'bar',
+    data:{ labels:promedios.map(p=>p.k), datasets:[{ label:'Horas promedio de resolución', data:promedios.map(p=>Number(p.prom.toFixed(1))), backgroundColor:COLOR_NARANJA }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{ x:{beginAtZero:true, title:{display:true,text:'Horas'}} },
+      plugins:{ legend:{display:false}, title:{display:true,text:'Tiempo promedio de resolución por CCTV (desde aceptación)'} } }
+  });
+
+  /* ---- 4. Monto recuperado ---- */
+  const identificadosConMonto = resueltos.filter(r=>r.Resultado==='Identificado' && r.MontoRecuperado && Number(r.MontoRecuperado)>0);
+  const totalMonto = identificadosConMonto.reduce((s,r)=>s+Number(r.MontoRecuperado),0);
+  document.getElementById('dashMontoTotal').textContent = '$' + totalMonto.toLocaleString('es-CL');
+
+  const montoPorArea = {};
+  identificadosConMonto.forEach(r=>{
+    const k = r.Area || 'Sin dato';
+    montoPorArea[k] = (montoPorArea[k]||0) + Number(r.MontoRecuperado);
+  });
+  const montoOrdenado = Object.entries(montoPorArea).sort((a,b)=>b[1]-a[1]);
+
+  pintarChart('chartMonto', {
+    type:'bar',
+    data:{ labels:montoOrdenado.map(a=>a[0]), datasets:[{ label:'Monto recuperado (CLP)', data:montoOrdenado.map(a=>a[1]), backgroundColor:COLOR_VERDE }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{ x:{beginAtZero:true, ticks:{ callback:(v)=>'$'+Number(v).toLocaleString('es-CL') }} },
+      plugins:{ legend:{display:false}, title:{display:true,text:'Monto recuperado por área (solo casos identificados)'} } }
+  });
 }
 
 function descargarExcel(){
