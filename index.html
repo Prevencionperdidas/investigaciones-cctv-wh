@@ -125,6 +125,13 @@
   .btn-desest{background:#6b7680;color:#fff;}
   .actions button:active{transform:scale(.97);}
 
+  .delete-row{padding:0 16px 12px;border-top:1px solid #F0F2F4;text-align:right;}
+  .btn-delete-caso{
+    background:none;border:none;color:#b0b6bc;font-size:11px;font-weight:600;
+    padding:8px 4px 0;cursor:pointer;transition:color .15s;
+  }
+  .btn-delete-caso:hover{color:var(--rojo);}
+
   .modal-overlay{
     display:none;position:fixed;inset:0;background:rgba(4,10,18,.75);z-index:100;
     align-items:center;justify-content:center;padding:20px;
@@ -621,11 +628,16 @@ function render(){
       ${montoHtml}
       ${timerHtml}
       ${actionsHtml}
+      <div class="delete-row">
+        <button class="btn-delete-caso" onclick="pedirBorrarCaso('${r.ID}')" title="Borrar este caso permanentemente">🗑️ Borrar caso</button>
+      </div>
     </div>`;
   }).join('');
 }
 
-let pinAction = null; // 'sheet' | 'dashboard'
+let pinAction = null; // 'sheet' | 'dashboard' | 'delete'
+let pendingDeleteId = null;
+let pendingDeleteInfo = null;
 
 function abrirGoogleSheet(){
   if(!SHEET_URL || SHEET_URL.indexOf('PEGA_AQUI') === 0){
@@ -647,6 +659,18 @@ function abrirDashboardPin(){
   document.getElementById('modalPin').classList.add('show');
   setTimeout(()=>document.getElementById('inputPin').focus(), 100);
 }
+function pedirBorrarCaso(id){
+  const r = datos.find(x=>x.ID===id);
+  if(!r){ alert('No se encontró el caso.'); return; }
+  pendingDeleteId = id;
+  pendingDeleteInfo = r;
+  pinAction = 'delete';
+  document.getElementById('tituloPin').textContent = '🔒 Confirmar borrado permanente';
+  document.getElementById('inputPin').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  document.getElementById('modalPin').classList.add('show');
+  setTimeout(()=>document.getElementById('inputPin').focus(), 100);
+}
 function cerrarModalPin(){
   document.getElementById('modalPin').classList.remove('show');
 }
@@ -656,11 +680,33 @@ function confirmarPin(){
     cerrarModalPin();
     if(pinAction === 'sheet') window.open(SHEET_URL, '_blank');
     else if(pinAction === 'dashboard') abrirDashboard();
+    else if(pinAction === 'delete') confirmarBorradoConDetalle_();
   } else {
     document.getElementById('pinError').style.display = 'block';
     document.getElementById('inputPin').value = '';
     document.getElementById('inputPin').focus();
   }
+}
+
+function confirmarBorradoConDetalle_(){
+  const r = pendingDeleteInfo;
+  if(!r){ return; }
+  const fecha = r.Timestamp ? new Date(r.Timestamp).toLocaleString('es-CL') : 'sin fecha';
+  const mensaje =
+    '⚠️ Vas a BORRAR PERMANENTEMENTE este caso. No se puede deshacer.\n\n' +
+    'Área: ' + (r.Area||'') + '\n' +
+    'Solicitante: ' + (r.Solicitante||'') + '\n' +
+    'Fecha: ' + fecha + '\n' +
+    'Detalle: ' + (r.Detalle||'') + '\n\n' +
+    '¿Confirmas que este es el caso correcto y deseas borrarlo?';
+  if(confirm(mensaje)){
+    const fd = new FormData();
+    fd.append('action','delete');
+    fd.append('id', pendingDeleteId);
+    fetch(API_URL, {method:'POST', body:fd, mode:'no-cors'}).then(()=> setTimeout(cargarDatos, 500));
+  }
+  pendingDeleteId = null;
+  pendingDeleteInfo = null;
 }
 
 /* ====== DASHBOARD PRIVADO ====== */
