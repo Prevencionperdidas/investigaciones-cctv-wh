@@ -44,6 +44,7 @@
   .sum-card.ident .n{color:var(--verde);}
   .sum-card.noident .n{color:var(--rojo);}
   .sum-card.desest .n{color:#6b7680;}
+  .sum-card.monto .n{color:var(--verde);font-size:20px;}
 
   .tabs{display:flex;gap:8px;padding:18px 24px 0;flex-wrap:wrap;}
   .tab{
@@ -57,6 +58,18 @@
   .toolbar button{background:#fff;border:1.5px solid var(--gris-borde);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--azul);}
 
   .grid{padding:14px 24px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+
+  .area-summary{
+    margin:14px 24px 0;background:#fff;border:1px solid var(--gris-borde);border-radius:12px;padding:16px 18px;
+  }
+  .area-summary h3{margin:0 0 12px;font-size:14.5px;color:var(--azul-osc);}
+  .area-summary-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .area-summary-table th{background:var(--azul);color:#fff;text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.2px;}
+  .area-summary-table td{padding:9px 12px;border-bottom:1px solid var(--gris-borde);}
+  .area-summary-table tr:nth-child(even) td{background:#F7F8FA;}
+  .area-summary-table td.num{text-align:right;font-weight:700;}
+  .area-summary-table td.monto{text-align:right;font-weight:700;color:var(--verde);}
+  .area-summary-table tfoot td{font-weight:800;background:#EEF1F4;border-top:2px solid var(--azul);}
 
   .card{
     background:#fff;border-radius:14px;border:1px solid var(--gris-borde);overflow:hidden;
@@ -152,7 +165,42 @@
 
   .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px;}
   .dash-card{background:#fff;border-radius:14px;border:1px solid var(--gris-borde);padding:18px;}
+  .dash-card.full{grid-column:1/-1;}
   .dash-card h3{margin:0 0 14px;font-size:14.5px;color:var(--azul-osc);}
+
+  .dash-filterbar{
+    display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#fff;
+    border:1px solid var(--gris-borde);border-radius:12px;padding:14px 16px;margin-bottom:16px;
+  }
+  .dash-filter-group{display:flex;flex-direction:column;gap:4px;}
+  .dash-filter-group label{font-size:10.5px;font-weight:800;color:var(--azul-osc);text-transform:uppercase;letter-spacing:.3px;}
+  .dash-filter-group input[type=date]{padding:8px 10px;border-radius:8px;border:1.5px solid var(--gris-borde);font-size:13px;font-family:inherit;}
+  .dash-filter-btn{padding:9px 16px;border-radius:8px;border:none;font-weight:800;font-size:12.5px;cursor:pointer;}
+  .dash-filter-btn.apply{background:var(--azul);color:#fff;}
+  .dash-filter-btn.clear{background:#EDEFF1;color:#5b6670;}
+  .dash-filter-info{margin-left:auto;font-size:12px;color:#6b7680;font-weight:700;align-self:center;}
+
+  .dash-kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+  .dash-kpi-row .kpi{background:#fff;border:1px solid var(--gris-borde);border-radius:12px;padding:14px 10px;text-align:center;}
+  .dash-kpi-row .kpi .v{font-size:22px;font-weight:800;color:var(--azul-osc);}
+  .dash-kpi-row .kpi .l{font-size:10px;color:#6b7680;font-weight:700;text-transform:uppercase;letter-spacing:.2px;}
+  .dash-kpi-row .kpi.pend .v{color:#5b6670;}
+  .dash-kpi-row .kpi.proc .v{color:var(--naranja);}
+  .dash-kpi-row .kpi.res .v{color:var(--azul);}
+  .dash-kpi-row .kpi.sla .v{color:var(--verde);}
+  .dash-kpi-row .kpi.monto .v{color:var(--verde);font-size:17px;}
+
+  .dash-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .dash-table th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.2px;}
+  .dash-table td{padding:9px 12px;border-bottom:1px solid var(--gris-borde);}
+  .dash-table tr:nth-child(even) td{background:#F7F8FA;}
+  .dash-table td.num{text-align:right;font-weight:700;color:var(--verde);}
+  #dashTablaCasos, #dashTablaOperador{overflow-x:auto;}
+
+  @media (max-width: 720px){
+    .dash-kpi-row{grid-template-columns:repeat(2,1fr);}
+    .dash-filter-info{margin-left:0;width:100%;}
+  }
 
   .dash-numbers{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
   .dash-numbers .dn{flex:1;min-width:90px;background:#F7F8FA;border-radius:10px;padding:10px;text-align:center;}
@@ -195,6 +243,7 @@
   <div class="sum-card ident"><div class="n" id="cIdent">0</div><div class="l">Identificadas</div></div>
   <div class="sum-card noident"><div class="n" id="cNoIdent">0</div><div class="l">No identificadas</div></div>
   <div class="sum-card desest"><div class="n" id="cDesest">0</div><div class="l">Desestimadas</div></div>
+  <div class="sum-card monto"><div class="n" id="cMonto">$0</div><div class="l">Monto recuperado</div></div>
 </div>
 
 <div class="tabs">
@@ -211,7 +260,13 @@
     <button id="btnActualizar" onclick="cargarDatos()">⟳ Actualizar ahora</button>
     <button onclick="descargarExcel()">⬇ Descargar Excel</button>
     <button onclick="abrirGoogleSheet()">📄 Abrir Google Sheet</button>
+    <button onclick="toggleAreaSummary()" id="btnToggleArea">📊 Casos por área ▾</button>
   </div>
+</div>
+
+<div class="area-summary" id="areaSummary" style="display:none;">
+  <h3>📊 Casos por área de trabajo</h3>
+  <div id="areaSummaryBody"></div>
 </div>
 
 <div class="grid" id="grid"><div class="empty">Cargando investigaciones…</div></div>
@@ -269,19 +324,39 @@
     <div class="dash-header">
       <div>
         <h2>📊 Dashboard privado · Investigaciones CCTV</h2>
-        <p>Solo visible con contraseña · Datos actuales de la hoja</p>
+        <p>Solo visible con contraseña · Vista ejecutiva</p>
       </div>
       <button class="dash-close" onclick="cerrarDashboard()">✕ Cerrar</button>
+    </div>
+
+    <div class="dash-filterbar">
+      <div class="dash-filter-group">
+        <label>Desde</label>
+        <input type="date" id="fDesde">
+      </div>
+      <div class="dash-filter-group">
+        <label>Hasta</label>
+        <input type="date" id="fHasta">
+      </div>
+      <button class="dash-filter-btn apply" onclick="aplicarFiltroFechas()">Aplicar</button>
+      <button class="dash-filter-btn clear" onclick="limpiarFiltroFechas()">Ver todo</button>
+      <div class="dash-filter-info" id="dashRangoTexto"></div>
+    </div>
+
+    <div class="dash-kpi-row" id="dashKpiRow"></div>
+
+    <div class="dash-card full">
+      <h3>Comportamiento de casos enviados vs. casos cerrados por día</h3>
+      <div class="dash-chart-box tall"><canvas id="chartTendencia"></canvas></div>
     </div>
 
     <div class="dash-grid">
 
       <div class="dash-card">
-        <h3>1 · Estados y cumplimiento de SLA</h3>
-        <div class="dash-numbers" id="dashEstadosNums"></div>
+        <h3>1 · Cumplimiento de SLA</h3>
         <div class="dash-chart-box"><canvas id="chartEstados"></canvas></div>
         <div class="dash-chart-box"><canvas id="chartSLA"></canvas></div>
-        <p class="dash-note">El cumplimiento se calcula comparando el tiempo entre la solicitud y la finalización contra el SLA comprometido (24h / 48h / 72h). Solo considera casos resueltos.</p>
+        <p class="dash-note">El cumplimiento se calcula comparando el tiempo entre la solicitud y la finalización contra el SLA comprometido (24h / 48h / 72h). Solo considera casos resueltos en el rango seleccionado.</p>
       </div>
 
       <div class="dash-card">
@@ -300,6 +375,16 @@
         <h3>4 · Recuperación monetaria (casos identificados)</h3>
         <div class="dash-monto" id="dashMontoTotal">$0</div>
         <div class="dash-chart-box"><canvas id="chartMonto"></canvas></div>
+      </div>
+
+      <div class="dash-card full">
+        <h3>5 · Montos recuperados cuantificados por operador CCTV</h3>
+        <div id="dashTablaOperador"></div>
+      </div>
+
+      <div class="dash-card full">
+        <h3>6 · Detalle de monto recuperado por investigación (casos identificados)</h3>
+        <div id="dashTablaCasos"></div>
       </div>
 
     </div>
@@ -367,6 +452,58 @@ function cargarDatos(){
   }, 10000);
 }
 
+function toggleAreaSummary(){
+  const cont = document.getElementById('areaSummary');
+  const abierto = cont.style.display !== 'none';
+  cont.style.display = abierto ? 'none' : 'block';
+  document.getElementById('btnToggleArea').textContent = abierto ? '📊 Casos por área ▾' : '📊 Casos por área ▲';
+  if(!abierto) renderResumenAreas();
+}
+
+function renderResumenAreas(){
+  const cont = document.getElementById('areaSummaryBody');
+  if(!cont) return;
+
+  const porArea = {}; // { area: { casos:0, monto:0 } }
+  datos.forEach(r=>{
+    const k = r.Area || 'Sin dato';
+    if(!porArea[k]) porArea[k] = { casos:0, monto:0 };
+    porArea[k].casos++;
+  });
+  datos.forEach(r=>{
+    if(r.Estado==='Resuelto' && r.Resultado==='Identificado' && r.MontoRecuperado && Number(r.MontoRecuperado)>0){
+      const k = r.Area || 'Sin dato';
+      if(!porArea[k]) porArea[k] = { casos:0, monto:0 };
+      porArea[k].monto += Number(r.MontoRecuperado);
+    }
+  });
+
+  const filas = Object.entries(porArea).sort((a,b)=>b[1].casos-a[1].casos);
+  if(!filas.length){
+    cont.innerHTML = '<p style="font-size:12.5px;color:#8b94a0;margin:0;">Aún no hay solicitudes registradas.</p>';
+    return;
+  }
+
+  const totalCasos = filas.reduce((s,f)=>s+f[1].casos, 0);
+  const totalMonto = filas.reduce((s,f)=>s+f[1].monto, 0);
+
+  cont.innerHTML = `<table class="area-summary-table"><thead><tr>
+      <th>Área</th><th style="text-align:right;">N° de casos solicitados</th><th style="text-align:right;">Monto recuperado</th>
+    </tr></thead><tbody>
+      ${filas.map(f=>`<tr>
+        <td>${f[0]}</td>
+        <td class="num">${f[1].casos}</td>
+        <td class="monto">${f[1].monto>0 ? '$'+f[1].monto.toLocaleString('es-CL') : '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+    <tfoot><tr>
+      <td>Total</td>
+      <td class="num">${totalCasos}</td>
+      <td class="monto">$${totalMonto.toLocaleString('es-CL')}</td>
+    </tr></tfoot>
+    </table>`;
+}
+
 function estadoInfo(r){
   if(r.Estado === 'Pendiente') return {cls:'pendiente', tag:'Pendiente'};
   if(r.Estado === 'En Proceso') return {cls:'enproceso', tag:'En proceso'};
@@ -398,6 +535,7 @@ function render(){
     }
     return true;
   });
+  renderResumenAreas();
 
   // Contadores globales (no afectados por filtro de texto)
   document.getElementById('cPend').textContent = datos.filter(r=>r.Estado==='Pendiente').length;
@@ -405,6 +543,10 @@ function render(){
   document.getElementById('cIdent').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='Identificado').length;
   document.getElementById('cNoIdent').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='No Identificado').length;
   document.getElementById('cDesest').textContent = datos.filter(r=>r.Estado==='Resuelto' && r.Resultado==='Desestimada por Capacidad').length;
+  const totalMontoPanel = datos
+    .filter(r=>r.Estado==='Resuelto' && r.Resultado==='Identificado' && r.MontoRecuperado && Number(r.MontoRecuperado)>0)
+    .reduce((s,r)=>s+Number(r.MontoRecuperado),0);
+  document.getElementById('cMonto').textContent = '$' + totalMontoPanel.toLocaleString('es-CL');
 
   const grid = document.getElementById('grid');
   if(!filtrados.length){
@@ -483,7 +625,7 @@ function render(){
 let pinAction = null; // 'sheet' | 'dashboard'
 
 function abrirGoogleSheet(){
-  if(!SHEET_URL || SHEET_URL.indexOf('https://docs.google.com/spreadsheets/d/1kwej6-B5YuRCPqR7tTN6Mz_VozImq-q_Qlvj_5MxU74/edit?gid=1544700765#gid=1544700765') === 0){
+  if(!SHEET_URL || SHEET_URL.indexOf('PEGA_AQUI') === 0){
     alert('Falta configurar SHEET_URL en el código con el link de tu Google Sheet.');
     return;
   }
@@ -525,10 +667,28 @@ const COLOR_AZUL = '#0058A3', COLOR_AMARILLO = '#FFDA1A', COLOR_VERDE = '#2E8B3D
 
 function abrirDashboard(){
   document.getElementById('dashboardOverlay').classList.add('show');
+  // Rango por defecto la primera vez: últimos 30 días
+  const fD = document.getElementById('fDesde');
+  const fH = document.getElementById('fHasta');
+  if(!fD.value && !fH.value){
+    const hoy = new Date();
+    const hace30 = new Date(); hace30.setDate(hoy.getDate()-29);
+    fH.value = formatearFechaInput_(hoy);
+    fD.value = formatearFechaInput_(hace30);
+  }
   construirDashboard();
 }
 function cerrarDashboard(){
   document.getElementById('dashboardOverlay').classList.remove('show');
+}
+function formatearFechaInput_(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function aplicarFiltroFechas(){ construirDashboard(); }
+function limpiarFiltroFechas(){
+  document.getElementById('fDesde').value = '';
+  document.getElementById('fHasta').value = '';
+  construirDashboard();
 }
 
 function pintarChart(id, config){
@@ -550,12 +710,34 @@ function contarPor(arr, key){
   return m;
 }
 
-function construirDashboard(){
-  const resueltos = datos.filter(r=>r.Estado==='Resuelto');
+function claveDia_(fecha){
+  return fecha.getFullYear() + '-' + String(fecha.getMonth()+1).padStart(2,'0') + '-' + String(fecha.getDate()).padStart(2,'0');
+}
 
-  /* ---- 1. Estados + SLA ---- */
-  const nPend = datos.filter(r=>r.Estado==='Pendiente').length;
-  const nProc = datos.filter(r=>r.Estado==='En Proceso').length;
+function construirDashboard(){
+  const desdeVal = document.getElementById('fDesde').value;
+  const hastaVal = document.getElementById('fHasta').value;
+
+  const desdeDate = desdeVal ? new Date(desdeVal+'T00:00:00') : null;
+  const hastaDate = hastaVal ? new Date(hastaVal+'T23:59:59') : null;
+
+  const datosF = datos.filter(r=>{
+    if(!r.Timestamp) return true;
+    const t = new Date(r.Timestamp);
+    if(desdeDate && t < desdeDate) return false;
+    if(hastaDate && t > hastaDate) return false;
+    return true;
+  });
+
+  document.getElementById('dashRangoTexto').textContent = (desdeVal||hastaVal)
+    ? `Mostrando: ${desdeVal ? new Date(desdeVal+'T00:00:00').toLocaleDateString('es-CL') : 'inicio'} → ${hastaVal ? new Date(hastaVal+'T00:00:00').toLocaleDateString('es-CL') : 'hoy'}`
+    : 'Mostrando: todo el historial';
+
+  const resueltos = datosF.filter(r=>r.Estado==='Resuelto');
+
+  /* ---- KPIs ejecutivos ---- */
+  const nPend = datosF.filter(r=>r.Estado==='Pendiente').length;
+  const nProc = datosF.filter(r=>r.Estado==='En Proceso').length;
   const nRes = resueltos.length;
 
   let cumplidos = 0, incumplidos = 0;
@@ -572,13 +754,62 @@ function construirDashboard(){
   });
   const pctCumplido = (cumplidos+incumplidos) ? Math.round(cumplidos/(cumplidos+incumplidos)*100) : 0;
 
-  document.getElementById('dashEstadosNums').innerHTML = `
-    <div class="dn"><div class="v">${nPend}</div><div class="l">Pendientes</div></div>
-    <div class="dn"><div class="v">${nProc}</div><div class="l">En proceso</div></div>
-    <div class="dn"><div class="v">${nRes}</div><div class="l">Resueltas</div></div>
-    <div class="dn"><div class="v">${pctCumplido}%</div><div class="l">SLA cumplido</div></div>
-  `;
+  const identificadosConMonto = resueltos.filter(r=>r.Resultado==='Identificado' && r.MontoRecuperado && Number(r.MontoRecuperado)>0);
+  const totalMonto = identificadosConMonto.reduce((s,r)=>s+Number(r.MontoRecuperado),0);
 
+  document.getElementById('dashKpiRow').innerHTML = `
+    <div class="kpi pend"><div class="v">${nPend}</div><div class="l">Pendientes</div></div>
+    <div class="kpi proc"><div class="v">${nProc}</div><div class="l">En proceso</div></div>
+    <div class="kpi res"><div class="v">${nRes}</div><div class="l">Resueltas</div></div>
+    <div class="kpi sla"><div class="v">${pctCumplido}%</div><div class="l">SLA cumplido</div></div>
+    <div class="kpi monto"><div class="v">$${totalMonto.toLocaleString('es-CL')}</div><div class="l">Recuperado</div></div>
+  `;
+  document.getElementById('dashMontoTotal').textContent = '$' + totalMonto.toLocaleString('es-CL');
+
+  /* ---- Tendencia: enviados vs cerrados por día ---- */
+  let fechaIni, fechaFin;
+  if(desdeDate && hastaDate){ fechaIni = new Date(desdeDate); fechaFin = new Date(hastaDate); }
+  else { fechaFin = new Date(); fechaFin.setHours(0,0,0,0); fechaIni = new Date(fechaFin); fechaIni.setDate(fechaIni.getDate()-13); }
+  fechaIni.setHours(0,0,0,0); fechaFin.setHours(0,0,0,0);
+
+  const dias = [];
+  for(let d=new Date(fechaIni); d<=fechaFin; d.setDate(d.getDate()+1)) dias.push(new Date(d));
+  // Límite de seguridad: si el rango es enorme, no graficar día a día
+  const diasLimitados = dias.slice(0, 180);
+
+  const idx = {};
+  diasLimitados.forEach((d,i)=> idx[claveDia_(d)] = i);
+  const enviadosPorDia = diasLimitados.map(()=>0);
+  const cerradosPorDia = diasLimitados.map(()=>0);
+
+  datosF.forEach(r=>{
+    if(r.Timestamp){
+      const k = claveDia_(new Date(r.Timestamp));
+      if(idx[k] !== undefined) enviadosPorDia[idx[k]]++;
+    }
+  });
+  datosF.forEach(r=>{
+    if(r.Estado==='Resuelto' && r.HoraFinalizacion){
+      const k = claveDia_(new Date(r.HoraFinalizacion));
+      if(idx[k] !== undefined) cerradosPorDia[idx[k]]++;
+    }
+  });
+
+  pintarChart('chartTendencia', {
+    type:'line',
+    data:{
+      labels: diasLimitados.map(d=>d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'})),
+      datasets:[
+        { label:'Casos enviados', data:enviadosPorDia, borderColor:COLOR_AZUL, backgroundColor:COLOR_AZUL, tension:.3, fill:false },
+        { label:'Casos cerrados', data:cerradosPorDia, borderColor:COLOR_VERDE, backgroundColor:COLOR_VERDE, tension:.3, fill:false }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{beginAtZero:true, ticks:{precision:0}} },
+      plugins:{ legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}} } }
+  });
+
+  /* ---- 1. Estados + SLA ---- */
   pintarChart('chartEstados', {
     type:'doughnut',
     data:{ labels:['Pendientes','En proceso','Resueltas'],
@@ -600,7 +831,7 @@ function construirDashboard(){
   });
 
   /* ---- 2. Por área + resultado ---- */
-  const porArea = contarPor(datos, 'Area');
+  const porArea = contarPor(datosF, 'Area');
   const areasOrdenadas = Object.entries(porArea).sort((a,b)=>b[1]-a[1]);
 
   pintarChart('chartArea', {
@@ -652,11 +883,7 @@ function construirDashboard(){
       plugins:{ legend:{display:false}, title:{display:true,text:'Tiempo promedio de resolución por CCTV (desde aceptación)'} } }
   });
 
-  /* ---- 4. Monto recuperado ---- */
-  const identificadosConMonto = resueltos.filter(r=>r.Resultado==='Identificado' && r.MontoRecuperado && Number(r.MontoRecuperado)>0);
-  const totalMonto = identificadosConMonto.reduce((s,r)=>s+Number(r.MontoRecuperado),0);
-  document.getElementById('dashMontoTotal').textContent = '$' + totalMonto.toLocaleString('es-CL');
-
+  /* ---- 4. Monto recuperado por área ---- */
   const montoPorArea = {};
   identificadosConMonto.forEach(r=>{
     const k = r.Area || 'Sin dato';
@@ -671,6 +898,46 @@ function construirDashboard(){
       scales:{ x:{beginAtZero:true, ticks:{ callback:(v)=>'$'+Number(v).toLocaleString('es-CL') }} },
       plugins:{ legend:{display:false}, title:{display:true,text:'Monto recuperado por área (solo casos identificados)'} } }
   });
+
+  /* ---- 5. Tabla de monto por operador ---- */
+  const montoPorOperador = {};
+  identificadosConMonto.forEach(r=>{
+    const k = r.ResponsableCCTV || 'Sin dato';
+    montoPorOperador[k] = (montoPorOperador[k]||0) + Number(r.MontoRecuperado);
+  });
+  const filasOperador = Object.entries(montoPorOperador).sort((a,b)=>b[1]-a[1]);
+  const contTabla = document.getElementById('dashTablaOperador');
+  if(!filasOperador.length){
+    contTabla.innerHTML = '<p class="dash-note">Sin montos recuperados en el rango seleccionado.</p>';
+  } else {
+    contTabla.innerHTML = `<table class="dash-table"><thead><tr><th>Operador CCTV</th><th style="text-align:right;">Monto recuperado</th></tr></thead><tbody>
+      ${filasOperador.map(f=>`<tr><td>${f[0]}</td><td class="num">$${f[1].toLocaleString('es-CL')}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  /* ---- 6. Detalle de monto por investigación individual ---- */
+  const casosOrdenados = identificadosConMonto.slice().sort((a,b)=> Number(b.MontoRecuperado) - Number(a.MontoRecuperado));
+  const contCasos = document.getElementById('dashTablaCasos');
+  if(!casosOrdenados.length){
+    contCasos.innerHTML = '<p class="dash-note">Sin casos identificados con monto recuperado en el rango seleccionado.</p>';
+  } else {
+    contCasos.innerHTML = `<table class="dash-table"><thead><tr>
+        <th>Fecha</th><th>Área</th><th>Solicitante</th><th>Detalle SKU / OLPN</th><th>Operador CCTV</th><th style="text-align:right;">Monto recuperado</th>
+      </tr></thead><tbody>
+      ${casosOrdenados.map(r=>{
+        const fecha = r.Timestamp ? new Date(r.Timestamp).toLocaleDateString('es-CL') : '';
+        const detalle = (r.Detalle||'').replace(/</g,'&lt;');
+        return `<tr>
+          <td>${fecha}</td>
+          <td>${r.Area||''}</td>
+          <td>${r.Solicitante||''}</td>
+          <td>${detalle}</td>
+          <td>${r.ResponsableCCTV||''}</td>
+          <td class="num">$${Number(r.MontoRecuperado).toLocaleString('es-CL')}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+  }
 }
 
 function descargarExcel(){
