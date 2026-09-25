@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel CCTV · Investigaciones · PPS IKEA</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --azul:#0058A3; --azul-osc:#003D73; --amarillo:#FFDA1A;
@@ -692,9 +693,27 @@ function limpiarFiltroFechas(){
 }
 
 function pintarChart(id, config){
-  if(chartInstances[id]) chartInstances[id].destroy();
-  const ctx = document.getElementById(id).getContext('2d');
-  chartInstances[id] = new Chart(ctx, config);
+  const canvas = document.getElementById(id);
+  if(typeof Chart === 'undefined'){
+    // La librería de gráficos no cargó (sin internet o bloqueada por el navegador/firewall).
+    // No lanzamos error para no cortar el resto del dashboard (tablas, KPIs, etc.).
+    const wrap = canvas.parentElement;
+    if(wrap && !wrap.querySelector('.chart-error')){
+      const aviso = document.createElement('div');
+      aviso.className = 'chart-error';
+      aviso.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;color:#C0392B;text-align:center;padding:10px;';
+      aviso.textContent = 'No se pudo cargar la librería de gráficos (revisa tu conexión a internet).';
+      wrap.appendChild(aviso);
+    }
+    return;
+  }
+  try{
+    if(chartInstances[id]) chartInstances[id].destroy();
+    const ctx = canvas.getContext('2d');
+    chartInstances[id] = new Chart(ctx, config);
+  } catch(err){
+    console.error('Error al pintar el gráfico', id, err);
+  }
 }
 
 function slaHoras(tiempoRespuesta){
